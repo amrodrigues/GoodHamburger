@@ -1,0 +1,238 @@
+@page "/"
+@using GoodHamburger.Frontend.Models
+@inject HttpClient Http
+@rendermode InteractiveServer
+ 
+
+<PageTitle>Good Hamburger - Pedidos</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">🍔 Good Hamburger</h1>
+ 
+
+    <div class="row">
+        <!-- Cardápio e Novo Pedido -->
+        <div class="col-md-5">
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-cart-plus"></i> Novo Pedido</h5>
+                </div>
+                <div class="card-body bg-light">
+                    @if (menu == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="mt-2"><em>Carregando cardápio...</em></p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Selecione os itens:</label>
+                            @foreach (var item in menu)
+                            {
+                                <div class="form-check mb-2 p-2 border rounded bg-white">
+                                    <input class="form-check-input ms-0 me-2" type="checkbox" 
+                                           id="item-@item.Id" 
+                                           checked="@selectedItemIds.Contains(item.Id)"
+                                           @onchange="e => ToggleItem(item.Id, (bool)e.Value!)">
+                                    <label class="form-check-label w-100" for="item-@item.Id">
+                                        <span class="float-start">@item.Name</span>
+                                        <span class="float-end fw-bold">R$ @item.Price.ToString("F2")</span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <strong>Atenção!</strong> @errorMessage
+                                <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                            </div>
+                        }
+
+                            <button class="btn btn-danger btn-lg w-100 mt-2 shadow-sm"
+                                    @onclick="CreateOrder"
+                                    disabled="@(isSubmitting || !selectedItemIds.Any())">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-check-circle"></i> 
+                                    @(" Finalizar Pedido")
+                                }
+                            </button>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-percent"></i> Regras de Desconto</h5>
+                </div>
+                <div class="card-body bg-light">
+                    <ul class="list-group list-group-flush bg-transparent">
+                        <li class="list-group-item bg-transparent px-0">Sanduíche + batata + refrigerante → <strong>20% off</strong></li>
+                        <li class="list-group-item bg-transparent px-0">Sanduíche + refrigerante → <strong>15% off</strong></li>
+                        <li class="list-group-item bg-transparent px-0">Sanduíche + batata → <strong>10% off</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Pedidos -->
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Pedidos Recentes</h5>
+                    <button class="btn btn-sm btn-outline-light" @onclick="LoadOrders">
+                        <i class="bi bi-arrow-clockwise"></i> Atualizar
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Itens</th>
+                                    <th>Resumo Financeiro</th>
+                                    <th>Data/Hora</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (orders == null || !orders.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-muted">
+                                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                            Nenhum pedido registrado no momento.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var order in orders.OrderByDescending(o => o.CreatedAt))
+                                    {
+                                        <tr>
+                                            <td>
+                                                @foreach(var item in order.Items)
+                                                {
+                                                    <span class="badge bg-secondary me-1">@item.Name</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-success">Total: R$ @order.Total.ToString("F2")</div>
+                                                @if (order.Discount > 0)
+                                                {
+                                                    <small class="text-muted">
+                                                        Desc: <span class="text-danger">-R$ @order.Discount.ToString("F2")</span>
+                                                    </small>
+                                                }
+                                            </td>
+                                            <td><small class="text-muted">@order.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</small></td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteOrder(order.Id)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<MenuItem>? menu;
+    private List<OrderResponse>? orders;
+    private List<int> selectedItemIds = new();
+    private string? errorMessage;
+    
+    // Deixe apenas UMA definição. Se o BaseAddress estiver no Program.cs, use a relativa:
+    private string apiBaseUrl = "api/orders";
+    private bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMenu();
+        await LoadOrders();
+    }
+
+    private async Task LoadMenu()
+    {
+        try { menu = await Http.GetFromJsonAsync<List<MenuItem>>($"{apiBaseUrl}/menu"); }
+        catch { errorMessage = "Erro ao conectar com a API."; }
+    }
+
+    private async Task LoadOrders()
+    {
+        try { orders = await Http.GetFromJsonAsync<List<OrderResponse>>(apiBaseUrl); }
+        catch { errorMessage = "Erro ao carregar lista de pedidos."; }
+    }
+
+    // Corrigido para receber apenas o bool do checkbox
+    private void ToggleItem(int id, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!selectedItemIds.Contains(id)) selectedItemIds.Add(id);
+        }
+        else
+        {
+            selectedItemIds.Remove(id);
+        }
+    }
+
+    private async Task CreateOrder()
+    {
+        if (isSubmitting) return;
+
+        errorMessage = null;
+        isSubmitting = true;
+        try
+        {
+            var request = new CreateOrderRequest { ItemIds = selectedItemIds };
+            var response = await Http.PostAsJsonAsync(apiBaseUrl, request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                selectedItemIds.Clear();
+                await LoadOrders();
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(content) ? $"Erro: {response.ReasonPhrase}" : content;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Erro ao enviar pedido: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task DeleteOrder(Guid id)
+    {
+        try
+        {
+            var response = await Http.DeleteAsync($"{apiBaseUrl}/{id}");
+            if (response.IsSuccessStatusCode) await LoadOrders();
+        }
+        catch { errorMessage = "Erro ao excluir pedido."; }
+    }
+}
