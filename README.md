@@ -1,11 +1,12 @@
 # 🍔 Good Hamburger - Sistema de Pedidos
 
-Este projeto é um sistema de gerenciamento de pedidos para a lanchonete **Good Hamburger**, desenvolvido como demonstração técnica utilizando **.NET 8**.
+Este projeto é uma plataforma de gerenciamento de pedidos para a lanchonete **Good Hamburger**, desenvolvida para demonstrar arquitetura moderna com .NET 10 (compatível com .NET 8) e Blazor Interativo.
 
 ## 🚀 Tecnologias Utilizadas
 
 - **Backend:** ASP.NET Core Web API
 - **Frontend:** Blazor Web App (Interactive Server Mode)
+- **ORM:** Entity Framework Core com SQLite/SQL Server
 - **Testes:** xUnit
 - **Documentação:** Swagger/OpenAPI
 
@@ -50,3 +51,8 @@ dotnet test
 - `GoodHamburger.Api`: API REST com lógica de domínio e endpoints.
 - `GoodHamburger.Frontend`: Interface Blazor para interação com o usuário.
 - `GoodHamburger.Tests`: Testes unitários das regras de negócio.
+
+ ### 💡 Notas de Implementação
+* **Interatividade:** O frontend utiliza `@rendermode InteractiveServer` globalmente no App.razor para permitir manipulação dinâmica de eventos (DOM).
+
+ * **CORS:** A API possui políticas de Cross-Origin habilitadas para permitir a comunicação segura com o cliente Blazor. usando a liguagem markdow para eu colocar no readme
