@@ -15,10 +15,40 @@ Este projeto é uma plataforma de gerenciamento de pedidos para a lanchonete **G
 - **Documentação:** Swagger/OpenAPI
 
 
-## 🛠️ Como Executar
+## 🛠️ Instruções de Execução
 
 ### Pré-requisitos
 - .NET 8 SDK instalado.
+- Visual Studio 2022 ou VS Code.
+
+### Passo a passo:
+
+Clone o repositório:
+```bash
+git clone https://github.com/seu-usuario/good-hamburger.git
+```
+Restaure e compile a solução:
+```bash
+dotnet restore
+dotnet build
+```
+🛠️ Como configurar o Banco
+Para rodar o projeto com SQL Server, siga estes passos:
+
+Connection String: No arquivo appsettings.json da GoodHamburger.Api, ajuste a string de conexão para apontar para sua instância local:
+```bash
+JSON
+"ConnectionStrings": {
+  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=GoodHamburger;Trusted_Connection=True;"
+}
+```
+
+Atualizar o Banco: Execute o comando abaixo no terminal (dentro da pasta da API) para criar as tabelas:
+
+```bash
+dotnet ef database update
+```
+
 
 ### 1. Executar a API
 Navegue até a pasta da API e execute:
@@ -49,6 +79,31 @@ dotnet test
 ```
 <img width="1351" height="703" alt="testes" src="https://github.com/user-attachments/assets/73f58aa2-b6b1-4f9e-9e7c-d8251fca4cb3" />
 
+## 🏗️ Decisões de Arquitetura
+
+- **Blazor Interactive Server Mode:** Escolhido para garantir uma comunicação robusta em tempo real via SignalR. Isso permite que a lógica de UI permaneça próxima ao servidor, facilitando o gerenciamento de estado e segurança (Antiforgery) sem a complexidade inicial de um Client-Side puro.
+
+- **Separação de Responsabilidades (SoC):** A lógica de cálculo de descontos foi isolada em uma camada de serviço (OrderService) no Backend. Isso garante que as regras de negócio sejam centralizadas, facilitando a manutenção e permitindo que sejam testadas de forma isolada (Testes Unitários).
+
+- **Injeção de Dependência:** Utilizada para desacoplar o HttpClient e os serviços, facilitando a substituição por implementações de mock no futuro, se necessário.
+
+- **Padrão AAA nos Testes:** Adotado para garantir que a suite de testes seja legível e siga o padrão de mercado (Arrange, Act, Assert).
+  
+-  **Persistência Real em Banco de Dados:** Dados gravado no Banco de Dados(SqlServer).
+
+## 🗄️ Persistência de Dados
+
+- **SQL Server:** Utilizado como banco de dados relacional para garantir a consistência e integridade dos pedidos e itens do cardápio.
+
+- **Entity Framework Core:** Implementado como ORM para mapeamento objeto-relacional, utilizando a abordagem Code First.
+
+- **Migrations:** O versionamento do banco de dados é gerido via EF Migrations, permitindo a evolução do esquema de dados de forma controlada e auditável.
+
+- **Data Seeding:** O cardápio inicial (Sanduíches, Acompanhamentos e Bebidas) é populado automaticamente durante a inicialização/migração, garantindo que o sistema esteja pronto para uso imediato após o deploy.
+
+
+<img width="1349" height="707" alt="Banco de dados" src="https://github.com/user-attachments/assets/d6c56a5e-915a-4e9b-a4be-543fcfa68544" />
+
 
 ## 📋 Regras de Negócio Implementadas
 
@@ -62,6 +117,7 @@ O sistema calcula descontos automaticamente com base na composição do pedido:
 <img width="1917" height="919" alt="Só escolher um Hamb" src="https://github.com/user-attachments/assets/8d8e0767-d5db-4f14-9cfc-44d9aab3ecf5" />
 
 
+
 ## 📂 Estrutura do Projeto
 
 - `GoodHamburger.Api`: API REST com lógica de domínio e endpoints.
@@ -72,6 +128,16 @@ O sistema calcula descontos automaticamente com base na composição do pedido:
 * **Interatividade:** O frontend utiliza `@rendermode InteractiveServer` globalmente no App.razor para permitir manipulação dinâmica de eventos (DOM).
 
  * **CORS:** A API possui políticas de Cross-Origin habilitadas para permitir a comunicação segura com o cliente Blazor.
+
+## 🚧 O que ficou de fora (Próximos Passos)
+
+- **Autenticação e Autorização:** O sistema não possui controle de acesso. O próximo passo seria implementar ASP.NET Core Identity ou integração com Auth0/Azure AD.
+
+- **Dockerização:** A criação de um Dockerfile e docker-compose.yml para facilitar o deploy e a orquestração dos serviços de API e Frontend.
+
+- **Logging Estruturado:** Implementação de Serilog para rastreio de erros e monitoramento de performance em produção.
+
+- **Arredondamento Monetário:** Atualmente o sistema trabalha com precisão decimal total. Uma melhoria seria implementar uma política global de arredondamento para duas casas decimais seguindo normas contábeis.
 
  
 
